@@ -168,6 +168,40 @@
       canvas{height: 460px;}
       .title h1{font-size:16px}
     }
+
+    .touchControls{
+  position:absolute;
+  left:12px;
+  right:12px;
+  bottom:72px; /* arriba del toast */
+  display:flex;
+  justify-content:space-between;
+  pointer-events:none; /* para no bloquear canvas excepto botones */
+}
+.touchBtn{
+  pointer-events:auto;
+  width:64px;
+  height:64px;
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.18);
+  background: rgba(0,0,0,.35);
+  color:#fff;
+  font-size:26px;
+  display:grid;
+  place-items:center;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 14px 40px rgba(0,0,0,.35);
+  user-select:none;
+  -webkit-tap-highlight-color: transparent;
+}
+.touchBtn:active{
+  transform: translateY(1px) scale(0.98);
+}
+@media (min-width: 820px){
+  /* en compu los ocultamos (opcional) */
+  .touchControls{ display:none; }
+}
+
   </style>
 </head>
 <body>
@@ -187,6 +221,12 @@
 
     <div class="gameCard">
       <canvas id="c"></canvas>
+
+      <div class="touchControls" aria-label="Controles">
+  <button class="touchBtn" id="btnLeft" aria-label="Mover izquierda">⬅️</button>
+  <button class="touchBtn" id="btnRight" aria-label="Mover derecha">➡️</button>
+</div>
+
       <div class="toast" id="toast">Tip: mueve con ⬅️ ➡️ (o dedo en el celular) — atrapa 💗, evita 💣</div>
       <div class="hint">
         <span>Meta: llega a <b id="targetLabel">20</b> puntos.</span>
@@ -262,7 +302,7 @@
   const player = {
     x: 100, y: 100,
     w: 56, h: 56,
-    speed: 520,
+    speed: 420,
     emoji: "🧸"
   };
 
@@ -293,6 +333,29 @@
 
   // ====== INPUT ======
   const keys = { left:false, right:false };
+
+  // Botones táctiles (mantener presionado para moverse)
+const btnLeft = document.getElementById("btnLeft");
+const btnRight = document.getElementById("btnRight");
+
+function bindHold(btn, dir){
+  const down = (e) => { e.preventDefault(); keys[dir] = true; };
+  const up   = (e) => { e.preventDefault(); keys[dir] = false; };
+
+  btn.addEventListener("pointerdown", down);
+  btn.addEventListener("pointerup", up);
+  btn.addEventListener("pointercancel", up);
+  btn.addEventListener("pointerleave", up);
+
+  // respaldo por si iOS hace cosas raras
+  btn.addEventListener("touchstart", down, {passive:false});
+  btn.addEventListener("touchend", up, {passive:false});
+}
+
+bindHold(btnLeft, "left");
+bindHold(btnRight, "right");
+
+
   window.addEventListener("keydown", (e) => {
     if (e.key === "ArrowLeft") keys.left = true;
     if (e.key === "ArrowRight") keys.right = true;
